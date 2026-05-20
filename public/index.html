@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CJIS Control Lookup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      max-width: 800px;
+      margin: 0 auto 2rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #002868;
+    }
+
+    header p {
+      margin-top: 0.4rem;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .search-box {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #query {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #c8d0dc;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #query:focus { border-color: #002868; }
+
+    button {
+      padding: 0.65rem 1.4rem;
+      font-size: 1rem;
+      background: #002868;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #00438a; }
+
+    .hint {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .hint span {
+      background: #e8edf5;
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .hint span:hover { background: #c8d5e8; }
+
+    #results {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .control-card {
+      background: white;
+      border: 1px solid #dce3ed;
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .control-card .control-id {
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #002868;
+      background: #e8edf5;
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .control-card h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      color: #1a1a2e;
+    }
+
+    .control-card .body-text {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .error-msg {
+      color: #c0392b;
+      padding: 1rem;
+      background: #fdf0ef;
+      border-radius: 6px;
+      border: 1px solid #f5c6c2;
+    }
+
+    .status {
+      color: #555;
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+
+    .search-result-preview {
+      font-size: 0.88rem;
+      color: #555;
+      margin-top: 0.4rem;
+      border-top: 1px solid #eee;
+      padding-top: 0.5rem;
+    }
+
+    .search-result-preview a {
+      color: #002868;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .search-result-preview a:hover { text-decoration: underline; }
+
+    .divider {
+      max-width: 800px;
+      margin: 2.5rem auto 2rem;
+      border: none;
+      border-top: 2px solid #dce3ed;
+    }
+
+    .chatbot-section {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .chatbot-section h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #002868;
+      margin-bottom: 0.4rem;
+    }
+
+    .chatbot-section p {
+      font-size: 0.88rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    #chat-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      border: 2px solid #c8d0dc;
+      border-radius: 6px;
+      outline: none;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s;
+    }
+
+    #chat-input:focus { border-color: #002868; }
+
+    .chat-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    #answer-box {
+      margin-top: 1.25rem;
+      background: white;
+      border: 1px solid #dce3ed;
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: none;
+    }
+
+    #answer-box.visible { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #c8d0dc;
+      border-top-color: #002868;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #answer-text {
+      font-size: 0.93rem;
+      line-height: 1.7;
+      color: #222;
+      white-space: pre-wrap;
+    }
+
+    #answer-controls {
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    #answer-controls span {
+      background: #e8edf5;
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      font-family: monospace;
+      margin-right: 0.3rem;
+      cursor: pointer;
+    }
+
+    #answer-controls span:hover { background: #c8d5e8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>CJIS Security Policy — Control Lookup</h1>
+  <p>CJIS Security Policy v6.0 &mdash; December 2024 &mdash; FBI</p>
+</header>
+
+<div class="search-box">
+  <input
+    type="text"
+    id="query"
+    placeholder="Enter control ID (e.g. AC-2, AC-2(1)) or keyword (e.g. encryption)"
+    autocomplete="off"
+  />
+  <button onclick="search()">Search</button>
+</div>
+
+<p class="hint">
+  Try: <span onclick="fillAndSearch('AC-2')">AC-2</span>
+       <span onclick="fillAndSearch('AC-2(1)')">AC-2(1)</span>
+       <span onclick="fillAndSearch('IA-5')">IA-5</span>
+       <span onclick="fillAndSearch('encryption')">encryption</span>
+       <span onclick="fillAndSearch('audit')">audit</span>
+</p>
+
+<div id="results"></div>
+
+<hr class="divider">
+
+<section class="chatbot-section">
+  <h2>Ask Claude about CJIS</h2>
+  <p>Ask a plain-language question. Claude will answer using the policy text and cite the relevant control IDs.</p>
+  <textarea
+    id="chat-input"
+    placeholder="e.g. What are the password requirements for CJIS? How long must audit logs be retained?"
+  ></textarea>
+  <div class="chat-actions">
+    <button onclick="askClaude()">Ask</button>
+  </div>
+  <div id="answer-box">
+    <div id="answer-text"></div>
+    <div id="answer-controls"></div>
+  </div>
+</section>
+
+<script>
+  const input = document.getElementById('query');
+  const resultsDiv = document.getElementById('results');
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') search();
+  });
+
+  function fillAndSearch(val) {
+    input.value = val;
+    search();
+  }
+
+  function isControlId(q) {
+    // Matches NIST-style IDs: AC-2, AC-2(1), IA-5, SC-28(1), etc.
+    return /^[A-Z]{2,3}-\d+(\(\d+\))?$/.test(q.toUpperCase());
+  }
+
+  async function search() {
+    const q = input.value.trim();
+    if (!q) { resultsDiv.innerHTML = ''; return; }
+
+    resultsDiv.innerHTML = '<p class="status">Searching...</p>';
+
+    try {
+      if (isControlId(q)) {
+        await lookupById(q);
+      } else {
+        await fullTextSearch(q);
+      }
+    } catch (err) {
+      resultsDiv.innerHTML = `<p class="error-msg">Request failed: ${err.message}</p>`;
+    }
+  }
+
+  async function lookupById(id) {
+    const res = await fetch(`/api/control/${encodeURIComponent(id.toUpperCase())}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      resultsDiv.innerHTML = `<p class="error-msg">${data.error}</p>`;
+      return;
+    }
+
+    resultsDiv.innerHTML = renderCard(data, true);
+  }
+
+  async function fullTextSearch(q) {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (!res.ok || data.length === 0) {
+      resultsDiv.innerHTML = '<p class="status">No results found.</p>';
+      return;
+    }
+
+    resultsDiv.innerHTML = `<p class="status">${data.length} result(s) for "${q}"</p>` +
+      data.map(c => renderSearchResult(c)).join('');
+  }
+
+  function renderCard(c, showFullText) {
+    return `
+      <div class="control-card">
+        <span class="control-id">${c.id}</span>
+        <h2>${c.title || ''}</h2>
+        <div class="body-text">${c.text || '(no text extracted)'}</div>
+      </div>`;
+  }
+
+  function renderSearchResult(c) {
+    return `
+      <div class="control-card">
+        <span class="control-id" onclick="fillAndSearch('${c.id}')" style="cursor:pointer" title="Click to view full control">${c.id}</span>
+        <h2>${c.title || ''}</h2>
+        <div class="search-result-preview">
+          ${c.preview}...
+          &nbsp;<a href="#" onclick="fillAndSearch('${c.id}');return false">View full control</a>
+        </div>
+      </div>`;
+  }
+
+  const chatInput = document.getElementById('chat-input');
+  const answerBox = document.getElementById('answer-box');
+  const answerText = document.getElementById('answer-text');
+  const answerControls = document.getElementById('answer-controls');
+
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) askClaude();
+  });
+
+  async function askClaude() {
+    const question = chatInput.value.trim();
+    if (!question) return;
+
+    answerBox.classList.add('visible');
+    answerText.innerHTML = '<span class="spinner"></span>Claude is thinking…';
+    answerControls.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        answerText.innerHTML = `<span style="color:#c0392b">${data.error || 'An error occurred.'}</span>`;
+        return;
+      }
+
+      answerText.textContent = data.answer;
+
+      if (data.controlsUsed && data.controlsUsed.length > 0) {
+        answerControls.innerHTML =
+          'Controls referenced: ' +
+          data.controlsUsed
+            .map(id => `<span onclick="fillAndSearch('${id}')" title="View ${id}">${id}</span>`)
+            .join('');
+      }
+    } catch (err) {
+      answerText.innerHTML = `<span style="color:#c0392b">Request failed: ${err.message}</span>`;
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Never commit secrets
+.env
+
+# Dependencies (re-installed via npm install)
+node_modules/
+
+# Generated files (re-created by npm run parse)
+cjis-policy.pdf
+
+# Claude Code session settings
+.claude/
