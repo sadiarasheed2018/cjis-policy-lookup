@@ -129,6 +129,7 @@ Static Web Apps' default routing blocks POST methods on Function endpoints unles
 ---
 
 ## Repository structure
+```
 ├── public/
 │   └── index.html              # The frontend (search UI + Ask Claude)
 ├── api/
@@ -148,7 +149,7 @@ Static Web Apps' default routing blocks POST methods on Function endpoints unles
 ├── parse.js                    # Script to extract controls from the PDF
 ├── server.js                   # Local Express server for development
 └── package.json
-
+```
 ---
 
 ## How to recreate this from scratch
